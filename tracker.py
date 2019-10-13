@@ -2,40 +2,45 @@ from time import sleep
 from requests import get
 from bs4 import BeautifulSoup
 
-test_url = 'https://eune.op.gg/summoner/userName=gigakoksjungler'
-matchList = []
+match = KDA = ''
+test_url = 'https://euw.op.gg/summoner/userName=GIGAKLOCJUNGLER'
 url = input('op.gg link: ')
 if(url == 'test'):
     url = test_url
-Won = int(input("Matches already won: "))
-Lost = int(input("Matches already lost: "))
+
+Won = input("Matches already won (type 'l' to load previous Win/Loss stats from stats.txt file): ")
+if(Won == 'l'):
+    stat = open("stats.txt").read().split("/")
+    Won = int(stat[0])
+    Lost = int(stat[1])
+    print(Won, Lost)
+else:
+    Won = int(Won)
+    Lost = int(input("Matches already lost: "))
+
 Interval = int(input("Minutes of interval inbetween checking: "))
 
 def CheckMatches():
     #### Disa powinno sie jebac ####
-    V, D = 0, 0
-    old_matchList = matchList.copy()
-    matchList.clear()
-    comparsion = []
+    global match
+    global KDA
+    prev_match = match
+    prev_KDA = KDA
     page = get(url)
-    matches = BeautifulSoup(page.content, 'html.parser').find_all('div', {'class': 'GameResult'})
+    sup = BeautifulSoup(page.content, 'html.parser')
+    match = sup.find('div', {'class': 'GameResult'}).get_text().strip('\n																				 ')
+    KDA = sup.find('span', {'class': 'KDARatio'}).get_text()
 
-    for match in matches:
-        outcome = match.get_text().strip('\n																				 ')
-        matchList.append(outcome)
-    
-    for match in matchList:
-        if(match not in old_matchList):
-            comparsion.append(match)
+    if(prev_KDA != KDA and prev_match != match):
+        print("New activity has been tracked.")
+        if(match == "Victory"):
+            return (1,0)
+        elif(match == "Defeat"):
+            return (0,1)
+    else:
+        return (0,0)
 
-    #print(comparsion)
-    for match in comparsion:
-        if(match == 'Victory'):
-            V += 1
-        elif(match == 'Defeat'):
-            D += 1
 
-    return V, D
 
 def CheckLeague():
     page = get(url)
